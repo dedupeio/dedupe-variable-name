@@ -10,6 +10,6 @@ setup(
     version='0.0.1',
     description='Name variable type for dedupe',
     packages=['dedupe.variables'],
-    install_requires=['probablepeople', 'dedupe', 'future'],
+    install_requires=['probablepeople', 'parseratorvariable', 'future'],
     license='The MIT License: http://www.opensource.org/licenses/mit-license.php'
     )
