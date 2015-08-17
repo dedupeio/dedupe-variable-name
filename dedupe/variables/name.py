@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import functools
-from parseratorvariable import ParseratorType, comparePermutable, consolidate, compareString
+from parseratorvariable import ParseratorType, consolidate
 import probablepeople
 from .gender import gender_names
 import numpy
@@ -73,63 +73,60 @@ FIRST_NAME_PLACES = numpy.array([False] * (COMBO_NAMES * 2))
 FIRST_NAME_PLACES[0:len(FIRST_NAMES_A)] = True
 FIRST_NAME_PLACES[COMBO_NAMES:COMBO_NAMES+len(FIRST_NAMES_A)] = True
 
-def compareHouseholds(tags_a, tags_b, field_1, field_2) :
-    all_tags = set().union(field_1.keys(), field_2.keys())
-
-    if {'SecondSurname', 'SecondLastInitial'} & all_tags :
-        return comparePermutable(tags_a, tags_b, field_1, field_2)
-
-    else :
-        distances = numpy.empty(len(tags_a) * 2)
-        distances[:] = numpy.nan
-
-        first_name_dist = comparePermutable(FIRST_NAMES_A_PARTS,
-                                            FIRST_NAMES_B_PARTS,
-                                            field_1,
-                                            field_2)
-        distances[FIRST_NAME_PLACES] = first_name_dist
-
-        last_name_dist = list(compareFields(LAST_NAMES_A_PARTS,
-                                            field_1,
-                                            field_2))
-        distances[len(FIRST_NAMES_A) : COMBO_NAMES] = last_name_dist
-
-        return distances
-
-def compareFields(parts, field_1, field_2) :
-    joinParts = functools.partial(consolidate, components=parts)   
-    for part, (part_1, part_2) in zip(parts, zip(*map(joinParts, [field_1, field_2]))) :
-        if part == ('Gender',) :
-            yield part_1 + part_2 - 2 * part_1 * part_2
-        elif part == ('HasSuffixGenerational',) :
-            if bool(part_1) != bool(part_2) : # exclusive or
-                yield 1.0
-            else :
-                yield 0.0
-        else :
-            yield compareString(part_1, part_2)
-
-
 
 class WesternNameType(ParseratorType) :
     type = "Name"
 
-    def tagger(self, field) :
+    def __init__(self, definition) :
+        self.components = (('Person' , self.compareFields, PERSON),
+                           ('Corporation', self.compareFields, CORPORATION),
+                           ('Household', self.compareHouseholds, 
+                            FIRST_NAMES_A + LAST_NAMES_A,
+                            FIRST_NAMES_B + LAST_NAMES_B))
+
+        super(WesternNameType, self).__init__(definition)
+
+    @staticmethod
+    def tagger(field) :
         tags, name_type = probablepeople.tag(field)
         tags['Gender'] = gender_names.get(tags.get('GivenName', None), 
                                           numpy.nan)
-        tags['HasSuffixGenerational1'] = tags.get('SuffixGenerational', None)
-        tags['HasSuffixGenerational2'] = tags.get('SuffixGenerational', None)
+        tags['HasSuffixGenerational'] = tags.get('SuffixGenerational', None)
         return tags, name_type
 
 
-    components = (('Person' , compareFields, PERSON),
-                  ('Corporation', compareFields, CORPORATION),
-                  ('Household', compareHouseholds, 
-                   FIRST_NAMES_A + LAST_NAMES_A,
-                   FIRST_NAMES_B + LAST_NAMES_B))
+    def compareHouseholds(self, tags_a, tags_b, field_1, field_2) :
+        all_tags = set().union(field_1.keys(), field_2.keys())
 
+        if {'SecondSurname', 'SecondLastInitial'} & all_tags :
+            return self.comparePermutable(tags_a, tags_b, field_1, field_2)
 
+        else :
+            distances = numpy.empty(len(tags_a) * 2)
+            distances[:] = numpy.nan
 
+            first_name_dist = self.comparePermutable(FIRST_NAMES_A_PARTS,
+                                                     FIRST_NAMES_B_PARTS,
+                                                     field_1,
+                                                     field_2)
+            distances[FIRST_NAME_PLACES] = first_name_dist
 
-        
+            last_name_dist = list(self.compareFields(LAST_NAMES_A_PARTS,
+                                                     field_1,
+                                                     field_2))
+            distances[len(FIRST_NAMES_A) : COMBO_NAMES] = last_name_dist
+
+            return distances
+
+    def compareFields(self, parts, field_1, field_2) :
+        joinParts = functools.partial(consolidate, components=parts)   
+        for part, (part_1, part_2) in zip(parts, zip(*map(joinParts, [field_1, field_2]))) :
+            if part == ('Gender',) :
+                yield part_1 + part_2 - 2 * part_1 * part_2
+            elif part == ('HasSuffixGenerational',) :
+                if bool(part_1) != bool(part_2) : # exclusive or
+                    yield 1.0
+                else :
+                    yield 0.0
+            else :
+                yield self.compareString(part_1, part_2)
