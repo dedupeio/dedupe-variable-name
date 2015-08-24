@@ -4,6 +4,7 @@ import functools
 from parseratorvariable import ParseratorType, consolidate
 import probablepeople
 from .gender import gender_names
+from .frequency import given_name_freq, surname_freq
 import numpy
 
 PERSON = (('marital prefix',      ('PrefixMarital',)),
@@ -18,7 +19,13 @@ PERSON = (('marital prefix',      ('PrefixMarital',)),
           ('other suffix',        ('SuffixOther',)),
           ('nick name',           ('NickName',)),
           ('gender',              ('Gender',)),
-          ('has generational suffix', ('HasSuffixGenerational')))
+          ('has generational suffix', ('HasSuffixGenerational')),
+          ('probality given name', ('FreqGivenName',)),
+          ('probality surname', ('FreqSurName',)),
+          ('given name probability interaction', ('FreqInteractionGivenName',)),
+          ('surname probability interaction', ('FreqInteractionSurName',)))
+
+
 
 
 FIRST_NAMES_A = (('marital prefix A',      ('PrefixMarital')),
@@ -92,6 +99,15 @@ class WesternNameType(ParseratorType) :
         tags['Gender'] = gender_names.get(tags.get('GivenName', None), 
                                           numpy.nan)
         tags['HasSuffixGenerational'] = tags.get('SuffixGenerational', None)
+        tags['FreqGivenName'] = given_name_freq.get(tags.get('GivenName',
+                                                             None),
+                                                    numpy.nan)
+        tags['FreqSurName'] = given_name_freq.get(tags.get('SurName',
+                                                             None),
+                                                    numpy.nan)
+        tags['FreqInteractionGivenName'] = None
+        tags['FreqInteractionSurName'] = None
+
         return tags, name_type
 
 
@@ -119,10 +135,27 @@ class WesternNameType(ParseratorType) :
             return distances
 
     def compareFields(self, parts, field_1, field_2) :
+        surname_dist = given_name_dist = numpy.nan
         joinParts = functools.partial(consolidate, components=parts)   
         for part, (part_1, part_2) in zip(parts, zip(*map(joinParts, [field_1, field_2]))) :
             if part == ('Gender',) :
                 yield part_1 + part_2 - 2 * part_1 * part_2
+            elif part == ('GivenName', 'FirstInitial') :
+                given_name_dist = self.compareString(part_1, part_2)
+                yield given_name_dist
+            elif part == ('SurName', 'LastInitial') :
+                surname_dist = self.compareString(part_1, part_2)
+                yield surname_dist
+            elif part == ('FreqGivenName',) :
+                prob_given_name = part_1 * part_2
+                yield prob_given_name
+            elif part == ('FreqSurName',) :
+                prob_surname = part_1 * part_2
+                yield prob_surname
+            elif part == ('FreqInteractionGivenName',) :
+                yield prob_given_name * given_name_dist
+            elif part == ('FreqInteractionSurName',) :
+                yield prob_surname * surname_dist
             elif part == ('HasSuffixGenerational',) :
                 if bool(part_1) != bool(part_2) : # exclusive or
                     yield 1.0
