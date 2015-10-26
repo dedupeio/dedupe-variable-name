@@ -54,20 +54,13 @@ LAST_NAMES_B = (('surname B',             ('SecondSurname',
                 ('generational suffix B', ('SecondSuffixGenerational',)),
                 ('other suffix B',        ('SecondSuffixOther',)))
 
-CORPORATION = (('corporation name',         ('CorporationName',)),
+CORPORATION = (('corporation name',         ('CorporationName', 'ShortForm')),
                ('corporation org',          ('CorporationNameOrganization',)),
                ('corporation type',         ('CorporationLegalType',)),
-               ('short form',               ('ShortForm',)),
-               ('client corporation name',  ('CorporationName',)),
-               ('client corporation org',   ('CorporationNameOrganization',)),
-               ('client corporation type',  ('CorporationLegalType',)),
-               ('client short form',        ('ShortForm',)))
-
-
-AKA_CORPORATION = (('other corporation name',  ('CorporationName',)),
-                   ('other corporation org',   ('CorporationNameOrganization',)),
-                   ('other corporation type',  ('CorporationLegalType',)),
-                   ('other short form',        ('ShortForm',)))
+               ('client corporation name',  ('ProxiedCorporationName', 
+                                             'ProxiedShortForm')),
+               ('client corporation org',   ('ProxiedCorporationNameOrganization',)),
+               ('client corporation type',  ('ProxiedCorporationLegalType',)))
 
 
 _, FIRST_NAMES_A_PARTS = list(zip(*FIRST_NAMES_A))
@@ -161,5 +154,11 @@ class WesternNameType(ParseratorType) :
                     yield 1.0
                 else :
                     yield 0.0
+            elif part in {('CorporationName', 'ShortForm'),
+                          ('OtherCorporationName', 'OtherShortForm'),
+                          ('ProxiedCorporationName', 'ProxiedShortForm')} :
+                remainder_1 = part_1.split('the ', 1)[-1]
+                remainder_2 = part_2.split('the ', 1)[-1]
+                yield self.compareString(remainder_1, remainder_2)
             else :
                 yield self.compareString(part_1, part_2)
