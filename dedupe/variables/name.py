@@ -54,11 +54,12 @@ LAST_NAMES_B = (('surname B',             ('SecondSurname',
                 ('generational suffix B', ('SecondSuffixGenerational',)),
                 ('other suffix B',        ('SecondSuffixOther',)))
 
-CORPORATION = (('corporation name',         ('CorporationName', 'ShortForm')),
+CORPORATION = (('corporation name',         ('CorporationName',)),
+               ('short form',               ('ShortForm',)),
                ('corporation org',          ('CorporationNameOrganization',)),
                ('corporation type',         ('CorporationLegalType',)),
-               ('client corporation name',  ('ProxiedCorporationName', 
-                                             'ProxiedShortForm')),
+               ('client corporation name',  ('ProxiedCorporationName',)),
+               ('client short form',        ('ProxiedShortForm',)),
                ('client corporation org',   ('ProxiedCorporationNameOrganization',)),
                ('client corporation type',  ('ProxiedCorporationLegalType',)))
 
@@ -154,9 +155,8 @@ class WesternNameType(ParseratorType) :
                     yield 1.0
                 else :
                     yield 0.0
-            elif part in {('CorporationName', 'ShortForm'),
-                          ('OtherCorporationName', 'OtherShortForm'),
-                          ('ProxiedCorporationName', 'ProxiedShortForm')} :
+            elif part in {('CorporationName',),
+                          ('ProxiedCorporationName',)} :
                 remainder_1 = part_1.split('the ', 1)[-1]
                 remainder_2 = part_2.split('the ', 1)[-1]
                 yield self.compareString(remainder_1, remainder_2)
