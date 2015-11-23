@@ -20,8 +20,8 @@ PERSON = (('marital prefix',      ('PrefixMarital',)),
           ('nick name',           ('NickName',)),
           ('gender',              ('Gender',)),
           ('has generational suffix', ('HasSuffixGenerational')),
-          ('probality given name', ('FreqGivenName',)),
-          ('probality surname', ('FreqSurName',)),
+          ('probability given name', ('FreqGivenName',)),
+          ('probability surname', ('FreqSurName',)),
           ('given name probability interaction', ('FreqInteractionGivenName',)),
           ('surname probability interaction', ('FreqInteractionSurName',)))
 
@@ -54,14 +54,22 @@ LAST_NAMES_B = (('surname B',             ('SecondSurname',
                 ('generational suffix B', ('SecondSuffixGenerational',)),
                 ('other suffix B',        ('SecondSuffixOther',)))
 
-CORPORATION = (('corporation name',         ('CorporationName',)),
-               ('short form',               ('ShortForm',)),
-               ('corporation org',          ('CorporationNameOrganization',)),
-               ('corporation type',         ('CorporationLegalType',)),
-               ('client corporation name',  ('ProxiedCorporationName',)),
-               ('client short form',        ('ProxiedShortForm',)),
-               ('client corporation org',   ('ProxiedCorporationNameOrganization',)),
-               ('client corporation type',  ('ProxiedCorporationLegalType',)))
+CORPORATION = (('corporation name',             ('CorporationName', 
+                                                 'ShortForm')),
+               ('corporation org',              ('CorporationNameOrganization',)),
+               ('corporation type',             ('CorporationLegalType',)),
+               ('corporation committee',        ('CorporationCommitteeType',)),
+               ('corporation &Co',              ('CorporationNameAndCompany',)),
+               ('corporation branch',           ('CorporationNameBranchType', 
+                                                 'CorporationNameBranchIdentifier')),
+               ('client corporation name',      ('ProxiedCorporationName', 
+                                                 'ProxiedShortForm')),
+               ('client corporation org',       ('ProxiedCorporationNameOrganization',)),
+               ('client corporation type',      ('ProxiedCorporationLegalType',)),
+               ('client corporation committee', ('ProxiedCorporationCommitteeType',)),
+               ('client corporation &Co',       ('ProxiedCorporationNameAndCompany',)),
+               ('client corporation branch',    ('ProxiedCorporationNameBranchType', 
+                                                 'ProxiedCorporationNameBranchIdentifier')))
 
 
 _, FIRST_NAMES_A_PARTS = list(zip(*FIRST_NAMES_A))
@@ -73,6 +81,8 @@ COMBO_NAMES = len(FIRST_NAMES_A) + len(LAST_NAMES_A)
 FIRST_NAME_PLACES = numpy.array([False] * (COMBO_NAMES * 2))
 FIRST_NAME_PLACES[0:len(FIRST_NAMES_A)] = True
 FIRST_NAME_PLACES[COMBO_NAMES:COMBO_NAMES+len(FIRST_NAMES_A)] = True
+
+STOP_WORDS = {'the', 'elect', 'to', '&', 'and', 'for', 'of'}
 
 
 class WesternNameType(ParseratorType) :
@@ -155,10 +165,12 @@ class WesternNameType(ParseratorType) :
                     yield 1.0
                 else :
                     yield 0.0
-            elif part in {('CorporationName',),
-                          ('ProxiedCorporationName',)} :
-                remainder_1 = part_1.split('the ', 1)[-1]
-                remainder_2 = part_2.split('the ', 1)[-1]
+            elif part in {('CorporationName', 'ShortForm'),
+                          ('ProxiedCorporationName', 'ProxiedShortForm')} :
+                remainder_1 = ' '.join(word for word in part_1.split()
+                                       if word not in STOP_WORDS)
+                remainder_2 = ' '.join(word for word in part_2.split()
+                                       if word not in STOP_WORDS)
                 yield self.compareString(remainder_1, remainder_2)
             else :
                 yield self.compareString(part_1, part_2)
