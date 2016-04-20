@@ -7,10 +7,10 @@ except ImportError :
 setup(
     name='dedupe-variable-name',
     url='https://github.com/datamade/dedupe-variables-name',
-    version='0.0.10',
+    version='0.0.11',
     description='Name variable type for dedupe',
     packages=['dedupe.variables'],
-    install_requires=['probablepeople >= 0.4', 
+    install_requires=['probablepeople >= 0.5', 
                       'parseratorvariable >= 0.0.14', 
                       'future'],
     license='The MIT License: http://www.opensource.org/licenses/mit-license.php'

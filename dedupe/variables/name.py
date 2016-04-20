@@ -89,28 +89,40 @@ class WesternNameType(ParseratorType) :
     type = "Name"
 
     def __init__(self, definition) :
-        self.components = (('Person' , self.compareFields, PERSON),
-                           ('Corporation', self.compareFields, CORPORATION),
-                           ('Household', self.compareHouseholds, 
-                            FIRST_NAMES_A + LAST_NAMES_A,
-                            FIRST_NAMES_B + LAST_NAMES_B))
+        self.name_type = definition.get('name type', None)
+        if self.name_type == 'person':
+            self.components = (('Person' , self.compareFields, PERSON),
+                               ('Household', self.compareHouseholds,
+                                FIRST_NAMES_A + LAST_NAMES_A,
+                                FIRST_NAMES_B + LAST_NAMES_B))
+        elif self.name_type == 'company':
+            self.components = (('Corporation', self.compareFields, CORPORATION),)
+        elif self.name_type is None:
+            self.components = (('Person' , self.compareFields, PERSON),
+                               ('Household', self.compareHouseholds,
+                                FIRST_NAMES_A + LAST_NAMES_A,
+                                FIRST_NAMES_B + LAST_NAMES_B),
+                               ('Corporation', self.compareFields, CORPORATION))
+        else:
+            raise ValueError("valid values of name type are 'person' and 'company'")
+        
 
         super(WesternNameType, self).__init__(definition)
 
-    @staticmethod
-    def tagger(field) :
-        tags, name_type = probablepeople.tag(field)
-        tags['Gender'] = gender_names.get(tags.get('GivenName', None), 
-                                          numpy.nan)
-        tags['HasSuffixGenerational'] = tags.get('SuffixGenerational', None)
-        tags['FreqGivenName'] = given_name_freq.get(tags.get('GivenName',
-                                                             None),
-                                                    numpy.nan)
-        tags['FreqSurName'] = given_name_freq.get(tags.get('SurName',
-                                                             None),
-                                                    numpy.nan)
-        tags['FreqInteractionGivenName'] = None
-        tags['FreqInteractionSurName'] = None
+    def tagger(self, field) :
+        tags, name_type = probablepeople.tag(field, self.name_type)
+        if name_type == 'Person':
+            tags['Gender'] = gender_names.get(tags.get('GivenName', None), 
+                                              numpy.nan)
+            tags['HasSuffixGenerational'] = tags.get('SuffixGenerational', None)
+            tags['FreqGivenName'] = given_name_freq.get(tags.get('GivenName',
+                                                                 None),
+                                                        numpy.nan)
+            tags['FreqSurName'] = given_name_freq.get(tags.get('SurName',
+                                                               None),
+                                                      numpy.nan)
+            tags['FreqInteractionGivenName'] = None
+            tags['FreqInteractionSurName'] = None
 
         return tags, name_type
 
