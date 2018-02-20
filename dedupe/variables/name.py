@@ -6,7 +6,6 @@ import probablepeople
 import numpy
 from parseratorvariable import ParseratorType, consolidate
 from parseratorvariable.predicates import PartialString
-import dedupe.predicates
 
 from .gender import gender_names
 from .frequency import given_name_freq, surname_freq
@@ -109,13 +108,10 @@ class WesternNameType(ParseratorType) :
         else:
             raise ValueError("valid values of name type are 'person' and 'company'")
 
-        self.tag = probablepeople.tag
         block_parts = ('Surname', 'CorporationName')
 
-        super(WesternNameType, self).__init__(definition, block_parts)
+        super(WesternNameType, self).__init__(definition, probablepeople.tag, block_parts)
 
-
-        
 
     def tagger(self, field) :
         tags, name_type = self.tag(field, self.name_type)
