@@ -11,7 +11,7 @@ setup(
     description='Name variable type for dedupe',
     packages=['dedupe.variables'],
     install_requires=['probablepeople >= 0.5', 
-                      'parseratorvariable >= 0.0.14', 
+                      'parseratorvariable >= 0.0.17', 
                       'future'],
     license='The MIT License: http://www.opensource.org/licenses/mit-license.php'
     )
