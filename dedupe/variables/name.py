@@ -5,6 +5,7 @@ import functools
 import probablepeople
 import numpy
 from parseratorvariable import ParseratorType, consolidate
+from parseratorvariable.predicates import PartialString
 import dedupe.predicates
 
 from .gender import gender_names
@@ -87,61 +88,8 @@ FIRST_NAME_PLACES[COMBO_NAMES:COMBO_NAMES+len(FIRST_NAMES_A)] = True
 
 STOP_WORDS = {'the', 'elect', 'to', '&', 'and', 'for', 'of'}
 
-@functools.lru_cache(maxsize=1)
-def infer_type(field):
-    try:
-       _, inferred_type = probablepeople.tag(field)
-    except probablepeople.RepeatedLabelError:
-        return ()
-
-    return (inferred_type,)
-    
-
-class PartialPredicate(dedupe.predicates.Predicate):
-    type = 'PartialPredicate'
-    
-    cached_field = None
-    cached_results = None
-    
-    def __init__(self, func, field, part):
-        self.func = func
-        self.__name__ = "(%s, %s, %s)" % (func.__name__, field, part)
-        self.field = field
-        self.part = part
-
-    def __call__(self, record, **kwargs) :
-        column = record[self.field]
-        if column :
-            field = dedupe.predicates.strip_punc(column)
-        else :
-            return ()
-
-        tags = self.tag(field)
-        part = tags.get(self.part)
-
-        if part:
-            return self.func(part)
-        else:
-            return ()
-
-    @classmethod
-    def tag(cls, field):
-        if field == cls.cached_field:
-            return cls.cached_results
-
-        cls.cached_field = field
-        try:
-            cls.cached_results, _ = probablepeople.tag(field)
-        except probablepeople.RepeatedLabelError:
-            cls.cached_results = {}
-
-        return cls.cached_results
-        
-
 class WesternNameType(ParseratorType) :
     type = "Name"
-
-    _predicate_functions = ParseratorType._predicate_functions + (infer_type,)
 
     def __init__(self, definition) :
         self.name_type = definition.get('name type', None)
@@ -161,25 +109,16 @@ class WesternNameType(ParseratorType) :
         else:
             raise ValueError("valid values of name type are 'person' and 'company'")
 
-        super(WesternNameType, self).__init__(definition)
+        self.tag = probablepeople.tag
+        block_parts = ('Surname', 'CorporationName')
 
-        self.predicates += [PartialPredicate(pred, self.field, part)
-                            for pred in self._predicate_functions
-                            for part in ('Surname', 'CorporationName')]
-
-        for pred in self._partial_index_predicates:
-            pred.tagger = probablepeople.tag
-
-        self.predicates += [pred(threshold, self.field, part=part)
-                            for pred in self._partial_index_predicates
-                            for part in ('Surname', 'CorporationName')
-                            for threshold in self._index_thresholds]
+        super(WesternNameType, self).__init__(definition, block_parts)
 
 
         
 
     def tagger(self, field) :
-        tags, name_type = probablepeople.tag(field, self.name_type)
+        tags, name_type = self.tag(field, self.name_type)
         if name_type == 'Person':
             tags['Gender'] = gender_names.get(tags.get('GivenName', None), 
                                               numpy.nan)
