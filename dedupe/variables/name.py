@@ -1,11 +1,14 @@
 from __future__ import print_function
 
 import functools
-from parseratorvariable import ParseratorType, consolidate
+
 import probablepeople
+import numpy
+from parseratorvariable import ParseratorType, consolidate
+from parseratorvariable.predicates import PartialString
+
 from .gender import gender_names
 from .frequency import given_name_freq, surname_freq
-import numpy
 
 PERSON = (('marital prefix',      ('PrefixMarital',)),
           ('given name',          ('GivenName',
@@ -84,7 +87,6 @@ FIRST_NAME_PLACES[COMBO_NAMES:COMBO_NAMES+len(FIRST_NAMES_A)] = True
 
 STOP_WORDS = {'the', 'elect', 'to', '&', 'and', 'for', 'of'}
 
-
 class WesternNameType(ParseratorType) :
     type = "Name"
 
@@ -105,12 +107,14 @@ class WesternNameType(ParseratorType) :
                                ('Corporation', self.compareFields, CORPORATION))
         else:
             raise ValueError("valid values of name type are 'person' and 'company'")
-        
 
-        super(WesternNameType, self).__init__(definition)
+        block_parts = ('Surname', 'CorporationName')
+
+        super(WesternNameType, self).__init__(definition, probablepeople.tag, block_parts)
+
 
     def tagger(self, field) :
-        tags, name_type = probablepeople.tag(field, self.name_type)
+        tags, name_type = self.tag(field, self.name_type)
         if name_type == 'Person':
             tags['Gender'] = gender_names.get(tags.get('GivenName', None), 
                                               numpy.nan)
