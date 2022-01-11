@@ -122,9 +122,9 @@ class WesternNameType(ParseratorType) :
             tags['FreqGivenName'] = given_name_freq.get(tags.get('GivenName',
                                                                  None),
                                                         numpy.nan)
-            tags['FreqSurName'] = given_name_freq.get(tags.get('SurName',
-                                                               None),
-                                                      numpy.nan)
+            tags['FreqSurName'] = surname_freq.get(tags.get('SurName',
+                                                            None),
+                                                   numpy.nan)
             tags['FreqInteractionGivenName'] = None
             tags['FreqInteractionSurName'] = None
 
