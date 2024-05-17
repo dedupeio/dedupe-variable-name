@@ -40,6 +40,10 @@ class TestName(unittest.TestCase):
               0,   1,   0,   0,   0,   1,   0,   0,
               0,   0,   0,   0,   0 ])
 
+        predicates_parts = (getattr(p, "part", None) for p in name.predicates)
+        assert not any(p == 'CorporationName' for p in predicates_parts)
+
+
     def test_company_type(self):
         name = WesternNameType({'field' : 'foo', 'name type' : 'company'})
         print(name.comparator('James and Rita Allen',
@@ -52,7 +56,9 @@ class TestName(unittest.TestCase):
               0,  0,  0,  0,  0,  0,  0,  1,  0,
               0,  0,  0,  0,  0,  0,  0,  0,  0,
               0,  0])
-                                           
+        predicates_parts = (getattr(p, "part", None) for p in name.predicates)
+        assert not any(p == 'Surname' for p in predicates_parts)
+
                                            
         
 def prettyPrint(variable, comparison) :

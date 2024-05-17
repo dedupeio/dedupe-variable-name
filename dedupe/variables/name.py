@@ -97,18 +97,19 @@ class WesternNameType(ParseratorType) :
                                ('Household', self.compareHouseholds,
                                 FIRST_NAMES_A + LAST_NAMES_A,
                                 FIRST_NAMES_B + LAST_NAMES_B))
+            block_parts = ('Surname',)
         elif self.name_type == 'company':
             self.components = (('Corporation', self.compareFields, CORPORATION),)
+            block_parts = ('CorporationName',)
         elif self.name_type is None:
             self.components = (('Person' , self.compareFields, PERSON),
                                ('Household', self.compareHouseholds,
                                 FIRST_NAMES_A + LAST_NAMES_A,
                                 FIRST_NAMES_B + LAST_NAMES_B),
                                ('Corporation', self.compareFields, CORPORATION))
+            block_parts = ('Surname', 'CorporationName')
         else:
             raise ValueError("valid values of name type are 'person' and 'company'")
-
-        block_parts = ('Surname', 'CorporationName')
 
         super(WesternNameType, self).__init__(definition, probablepeople.tag, block_parts)
 
